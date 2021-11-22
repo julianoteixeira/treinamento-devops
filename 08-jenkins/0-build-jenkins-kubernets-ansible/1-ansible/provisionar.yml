@@ -24,10 +24,27 @@
     - name: "Instala java"
       shell: "apt install default-jdk -y"
 
-    # # TODO instalar terraform
-    # - name: "Instala ansible"
-    #   shell: "sudo apt install ansible -y"
-    
+    - name: "Install terraform passo 1"
+      shell: sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+
+    - name: "Install terraform passo 2"
+      shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+    - name: "Install terraform passo 3"
+      shell: sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+    - name: "Install terraform passo 4"
+      shell: sudo apt-get update && sudo apt-get install terraform -y  
+
+    - name: "Copia Chave privada ssh do Bira"
+      copy:
+        src: "~/.ssh/id_rsa"
+        dest: "/home/ubuntu/.ssh/id_rsa"
+        owner: jenkins
+        group: jenkins
+        mode: '0400'
+
+
     - name: "Instala ansible"
       shell: "sudo apt install ansible -y"
    

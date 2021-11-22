@@ -1,15 +1,14 @@
 provider "aws" {
-  region = "us-east-1"
+  region = "sa-east-1"
 }
 
-data "http" "myip" {
-  url = "http://ipv4.icanhazip.com" # outra opção "https://ifconfig.me"
-}
 
 resource "aws_instance" "dev_img_deploy_jenkins" {
-  ami           = "ami-09e67e426f25ce0d7"
+  ami           = "ami-0d6806446a46f9b9"
   instance_type = "t2.micro"
-  key_name      = "chave-jenkins"
+  key_name      = "key-par-devops"
+  subnet_id     = "subnet-01aca3d2f7d561284"
+  associate_public_ip_address = true
   tags = {
     Name = "dev_img_deploy_jenkins"
   }
@@ -19,7 +18,7 @@ resource "aws_instance" "dev_img_deploy_jenkins" {
 resource "aws_security_group" "acesso_jenkins_dev_img" {
   name        = "acesso_jenkins_dev_img"
   description = "acesso_jenkins_dev_img inbound traffic"
-
+  vpc_id      = "vpc-0a0eeef20f67dfb8d"
   ingress = [
     {
       description      = "SSH from VPC"

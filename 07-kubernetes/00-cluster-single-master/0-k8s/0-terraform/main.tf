@@ -1,15 +1,17 @@
 provider "aws" {
-  region = "us-east-1"
-}
-
-data "http" "myip" {
-  url = "http://ipv4.icanhazip.com" # outra opção "https://ifconfig.me"
+  region = "sa-east-1"
 }
 
 resource "aws_instance" "maquina_master" {
-  ami           = "ami-09e67e426f25ce0d7"
-  instance_type = "t2.medium"
-  key_name      = "treinamento-turma1_itau"
+  subnet_id                   = "subnet-01aca3d2f7d561284"
+  associate_public_ip_address = "true"
+  key_name                    = "key-par-devops"
+  ami                         = "ami-0e66f5495b4efdd0f"
+  instance_type               = "t2.large"
+  root_block_device {
+    encrypted   = true
+    volume_size = 8
+  }
   tags = {
     Name = "k8s-master"
   }
@@ -20,19 +22,26 @@ resource "aws_instance" "maquina_master" {
 }
 
 resource "aws_instance" "workers" {
-  ami           = "ami-09e67e426f25ce0d7"
-  instance_type = "t2.micro"
-  key_name      = "treinamento-turma1_itau"
+  subnet_id                   = "subnet-01aca3d2f7d561284"
+  associate_public_ip_address = "true"
+  key_name                    = "key-par-devops"
+  ami                         = "ami-0e66f5495b4efdd0f"
+  instance_type               = "t2.large"
+  root_block_device {
+    encrypted   = true
+    volume_size = 8
+  }
   tags = {
     Name = "k8s-node-${count.index}"
   }
   vpc_security_group_ids = [aws_security_group.acessos_workers_single_master.id]
-  count         = 3
+  count                  = 3
 }
 
 resource "aws_security_group" "acessos_master_single_master" {
   name        = "acessos_master_single_master"
   description = "acessos_workers_single_master inbound traffic"
+  vpc_id      = "vpc-0a0eeef20f67dfb8d"
 
   ingress = [
     {
@@ -40,11 +49,22 @@ resource "aws_security_group" "acessos_master_single_master" {
       from_port        = 22
       to_port          = 22
       protocol         = "tcp"
-      cidr_blocks      = ["${chomp(data.http.myip.body)}/32"]
+      cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"]
-      prefix_list_ids = null,
-      security_groups: null,
-      self: null
+      prefix_list_ids  = null,
+      security_groups : null,
+      self : null
+    },
+    {
+      description      = "aplicacao cpf"
+      from_port        = 30001
+      to_port          = 30001
+      protocol         = "tcp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null,
+      security_groups : null,
+      self : null
     },
     {
       cidr_blocks      = []
@@ -53,14 +73,14 @@ resource "aws_security_group" "acessos_master_single_master" {
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "-1"
-      security_groups  = [
-        "sg-0de8412f761f70f50",
-      ]
+    security_groups  = [
+      "sg-0d53b76cb498dc759",
+    ]
       self             = false
-      to_port          = 0
+    to_port          = 0
     },
     {
-      cidr_blocks      = [
+      cidr_blocks = [
         "0.0.0.0/0",
       ]
       description      = ""
@@ -81,10 +101,10 @@ resource "aws_security_group" "acessos_master_single_master" {
       protocol         = "-1"
       cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"],
-      prefix_list_ids = null,
-      security_groups: null,
-      self: null,
-      description: "Libera dados da rede interna"
+      prefix_list_ids  = null,
+      security_groups : null,
+      self : null,
+      description : "Libera dados da rede interna"
     }
   ]
 
@@ -97,6 +117,7 @@ resource "aws_security_group" "acessos_master_single_master" {
 resource "aws_security_group" "acessos_workers_single_master" {
   name        = "acessos_workers_single_master"
   description = "acessos_workers_single_master inbound traffic"
+  vpc_id      = "vpc-0a0eeef20f67dfb8d"
 
   ingress = [
     {
@@ -104,11 +125,11 @@ resource "aws_security_group" "acessos_workers_single_master" {
       from_port        = 22
       to_port          = 22
       protocol         = "tcp"
-      cidr_blocks      = ["${chomp(data.http.myip.body)}/32"]
+      cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"]
-      prefix_list_ids = null,
-      security_groups: null,
-      self: null
+      prefix_list_ids  = null,
+      security_groups : null,
+      self : null
     },
     {
       cidr_blocks      = []
@@ -117,11 +138,11 @@ resource "aws_security_group" "acessos_workers_single_master" {
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "-1"
-      security_groups  = [
-        "sg-0c8c7bdac4e2dbfb7",
+      security_groups = [
+        "${aws_security_group.acessos_master_single_master.id}",
       ]
-      self             = false
-      to_port          = 0
+      self    = false
+      to_port = 0
     },
   ]
 
@@ -132,10 +153,10 @@ resource "aws_security_group" "acessos_workers_single_master" {
       protocol         = "-1"
       cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"],
-      prefix_list_ids = null,
-      security_groups: null,
-      self: null,
-      description: "Libera dados da rede interna"
+      prefix_list_ids  = null,
+      security_groups : null,
+      self : null,
+      description : "Libera dados da rede interna"
     }
   ]
 
