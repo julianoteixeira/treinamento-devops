@@ -4,7 +4,7 @@ provider "aws" {
 
 
 resource "aws_instance" "dev_img_deploy_jenkins" {
-  ami           = "ami-0d6806446a46f9b9"
+  ami           = "ami-0e66f5495b4efdd0f"
   instance_type = "t2.micro"
   key_name      = "key-par-devops"
   subnet_id     = "subnet-01aca3d2f7d561284"
